@@ -1,7 +1,10 @@
-Installation instructions 
-npm install
+### Installation instructions 
 
+>git clone git@github.com:fernandiie/newmanDemoRep.git  
+>npm install
+>npm install --save-dev newman
 
-npm install --save-dev newman
+### Test Execution
 
-npm test --env-var token='insert here token'
+Execute the following command to execute all test within the collections. 
+>npm test --env-var token='insert here token'
