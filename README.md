@@ -1,7 +1,9 @@
 ### Installation instructions 
 
 >git clone git@github.com:fernandiie/newmanDemoRep.git  
+
 >npm install
+
 >npm install --save-dev newman
 
 ### Test Execution
