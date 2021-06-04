@@ -8,5 +8,5 @@
 
 ### Test Execution
 
-Execute the following command to execute all test within the collections. 
+Execute the following command to execute all tests within the collections. 
 >npm test --env-var token='insert here token'
