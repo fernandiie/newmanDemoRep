@@ -4,9 +4,6 @@
 
 >npm install
 
->npm install --save-dev newman
-
->npm install --save-dev newman-reporter-htmlextra
 
 ### Test Execution
 
