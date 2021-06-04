@@ -1,0 +1,1282 @@
+{
+	"info": {
+		"_postman_id": "b743da20-2b30-4c4a-a6d3-acf2c7168d9f",
+		"name": "Square Payments API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Payments",
+			"item": [
+				{
+					"name": "Create payments",
+					"item": [
+						{
+							"name": "Create a card-nonce-ok payment",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseJSON = pm.response.json();\r",
+											"pm.collectionVariables.set(\"payment_id\",responseJSON.payment.id);\r",
+											"\r",
+											"var expectedAmount = Number(pm.collectionVariables.get(\"amount_\"));\r",
+											"var actualAmount = (responseJSON.payment.amount_money.amount);\r",
+											"\r",
+											"var expectedCurrency = pm.collectionVariables.get(\"currency_code\");\r",
+											"var actualCurrency = (responseJSON.payment.amount_money.currency);\r",
+											"\r",
+											"pm.test(\"2.A - Validate the amount and currency match the original request\", function (){\r",
+											"    \r",
+											"    pm.expect(actualAmount).to.be.eql(expectedAmount);\r",
+											"    pm.expect(actualCurrency).to.be.eql(expectedCurrency);\r",
+											"})\r",
+											"\r",
+											"\r",
+											"\r",
+											"pm.test(\"Response time is less than 500ms\", function () {\r",
+											"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+											"});\r",
+											"\r",
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var random_idempotency_key = pm.variables.replaceIn('{{$randomUUID}}');\r",
+											"pm.collectionVariables.set(\"idempotency_key_\",random_idempotency_key);\r",
+											"\r",
+											"\r",
+											"var random_amount = pm.variables.replaceIn('{{$randomInt}}');\r",
+											"pm.collectionVariables.set(\"amount_\", random_amount);\r",
+											"\r",
+											"\r",
+											"pm.collectionVariables.set(\"expected_status_code\", 200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Square-Version",
+										"value": "{{squareVersion}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"amount_money\": {\r\n        \"currency\": \"{{currency_code}}\",\r\n        \"amount\": {{amount_}}\r\n    },\r\n    \"idempotency_key\": \"{{idempotency_key_}}\",\r\n    \"source_id\": \"cnon:card-nonce-ok\",\r\n    \"autocomplete\": false\r\n}"
+								},
+								"url": {
+									"raw": "{{baseURL}}/{{subURLPayments}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"{{subURLPayments}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create a cash payment",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"try {\r",
+											"var responseJSON = pm.response.json();\r",
+											"\r",
+											"console.log(responseJSON.errors[0].detail);\r",
+											"\r",
+											"pm.test(\"2.C - Validate error message displays when creating a cash payment with partial authorization enabled\", function (){    \r",
+											"    pm.expect(responseJSON.errors[0].detail).to.be.eql(\"Accept partial authorization not valid for autocomplete payments.\");\r",
+											"});\r",
+											"\r",
+											"}\r",
+											"catch(error) {\r",
+											"      console.log(error);\r",
+											"}\r",
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var random_idempotency_key = pm.variables.replaceIn('{{$randomUUID}}');\r",
+											"pm.collectionVariables.set(\"idempotency_key_\",random_idempotency_key);\r",
+											"\r",
+											"\r",
+											"var random_amount = pm.variables.replaceIn('{{$randomInt}}');\r",
+											"pm.collectionVariables.set(\"amount_\", random_amount);\r",
+											"\r",
+											"\r",
+											"pm.collectionVariables.set(\"expected_status_code\", 400);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Square-Version",
+										"value": "{{squareVersion}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"amount_money\": {\r\n        \"currency\": \"{{currency_code}}\",\r\n        \"amount\": {{amount_}}\r\n    },\r\n    \"idempotency_key\": \"{{idempotency_key_}}\",\r\n    \"source_id\": \"CASH\",\r\n    \"accept_partial_authorization\": true\r\n}"
+								},
+								"url": {
+									"raw": "{{baseURL}}/{{subURLPayments}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"{{subURLPayments}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create invalid payment",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseJSON = pm.response.json();\r",
+											"\r",
+											"pm.test(\"2.A - Validate payment cannot be created\", function (){\r",
+											"    \r",
+											"    pm.expect(responseJSON.errors[0].code).to.be.eql(\"BAD_REQUEST\");\r",
+											"});\r",
+											"\r",
+											"\r",
+											"\r",
+											"pm.test(\"Response time is less than 500ms\", function () {\r",
+											"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+											"});\r",
+											"\r",
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var random_idempotency_key = pm.variables.replaceIn('{{$randomUUID}}');\r",
+											"pm.collectionVariables.set(\"idempotency_key_\",random_idempotency_key);\r",
+											"\r",
+											"\r",
+											"var random_amount = pm.variables.replaceIn('{{$randomInt}}');\r",
+											"pm.collectionVariables.set(\"amount_\", random_amount);\r",
+											"\r",
+											"\r",
+											"pm.collectionVariables.set(\"expected_status_code\", 400);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Square-Version",
+										"value": "{{squareVersion}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"amount_money\": {\r\n        \"amount\": {{amount_}}\r\n    },\r\n    \"idempotency_key\": \"{{idempotency_key_}}\",\r\n    \"source_id\": \"cnon:card-nonce-ok\",\r\n    \"autocomplete\": false\r\n}"
+								},
+								"url": {
+									"raw": "{{baseURL}}/{{subURLPayments}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"{{subURLPayments}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Get payments",
+					"item": [
+						{
+							"name": "Get one payment",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseJSON = pm.response.json();\r",
+											"\r",
+											"var expectedPaymentId = pm.collectionVariables.get(\"payment_id\");\r",
+											"var actualPaymentId= (responseJSON.payment.id);\r",
+											"\r",
+											"\r",
+											"pm.test(\"2.B - Validate the payment ID match the original request\", function (){\r",
+											"    \r",
+											"    pm.expect(actualPaymentId).to.be.eql(expectedPaymentId);\r",
+											"})\r",
+											"\r",
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Response time is less than 300ms\", function () {\r",
+											"    pm.expect(pm.response.responseTime).to.be.below(300);\r",
+											"});\r",
+											"\r",
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.collectionVariables.set(\"expected_status_code\", 200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Square-Version",
+										"value": "{{squareVersion}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseURL}}/{{subURLPayments}}/{{payment_id}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"{{subURLPayments}}",
+										"{{payment_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get all the payments",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseJSON = pm.response.json();\r",
+											"\r",
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Response time is less than 800ms\", function () {\r",
+											"    pm.expect(pm.response.responseTime).to.be.below(800);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Content-Type header is application/json\", () => {\r",
+											"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');\r",
+											"});\r",
+											"\r",
+											"pm.test('Schema is valid', function() {\r",
+											"  pm.response.to.have.jsonSchema(responseJSON);\r",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.collectionVariables.set(\"expected_status_code\", 200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Square-Version",
+										"value": "2021-05-13",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseURL}}/{{subURLPayments}}/",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"{{subURLPayments}}",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get an invalid payment",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseJSON = pm.response.json();\r",
+											"\r",
+											"\r",
+											"pm.test(\"2.A - Validate invalid payment cannot be retrieved\", function (){\r",
+											"    \r",
+											"    pm.expect(responseJSON.errors[0].code).to.be.eql(\"NOT_FOUND\");\r",
+											"});\r",
+											"\r",
+											"\r",
+											"\r",
+											"pm.test(\"Response time is less than 300ms\", function () {\r",
+											"    pm.expect(pm.response.responseTime).to.be.below(300);\r",
+											"});\r",
+											"\r",
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.collectionVariables.set(\"expected_status_code\", 404);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Square-Version",
+										"value": "{{squareVersion}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseURL}}/{{subURLPayments}}/{{inv_payment_id}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"{{subURLPayments}}",
+										"{{inv_payment_id}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Delete payments",
+					"item": [
+						{
+							"name": "Cancel a payment by ID",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseJSON = pm.response.json();\r",
+											"\r",
+											"pm.test('Schema is valid', function() {\r",
+											"  pm.response.to.have.jsonSchema(responseJSON);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Content-Type header is application/json\", () => {\r",
+											"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');\r",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.collectionVariables.set(\"expected_status_code\", 200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/{{subURLPayments}}/{{payment_id}}/cancel",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"{{subURLPayments}}",
+										"{{payment_id}}",
+										"cancel"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Cancel a non-existing payment",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseJSON = pm.response.json();\r",
+											"\r",
+											"var invalid_paymentID=pm.collectionVariables.get(\"inv_payment_id\")\r",
+											"var actualDetails = responseJSON.errors[0].detail;\r",
+											"\r",
+											"console.log(actualDetails);\r",
+											"console.log(invalid_paymentID);\r",
+											"\r",
+											"pm.test(\"Validate error message when canceling a non-existing payment\", function (){\r",
+											"    \r",
+											"    pm.expect(actualDetails).to.eql('Could not find payment with id: '+ invalid_paymentID);\r",
+											"})\r",
+											"\r",
+											"\r",
+											"pm.test(\"Content-Type header is application/json\", () => {\r",
+											"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');\r",
+											"});\r",
+											"\r",
+											"pm.test('Schema is valid', function() {\r",
+											"  pm.response.to.have.jsonSchema(responseJSON);\r",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.collectionVariables.set(\"expected_status_code\", 404);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/{{subURLPayments}}/{{inv_payment_id}}/cancel",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"{{subURLPayments}}",
+										"{{inv_payment_id}}",
+										"cancel"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Update payments",
+					"item": [
+						{
+							"name": "CreatePayment Approved Update",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseJSON = pm.response.json();\r",
+											"pm.collectionVariables.set(\"payment_id\",responseJSON.payment.id);\r",
+											"\r",
+											"var expectedAmount = Number(pm.collectionVariables.get(\"amount_\"));\r",
+											"var actualAmount = (responseJSON.payment.amount_money.amount);\r",
+											"\r",
+											"var expectedCurrency = pm.collectionVariables.get(\"currency_code\");\r",
+											"var actualCurrency = (responseJSON.payment.amount_money.currency);\r",
+											"\r",
+											"pm.test(\"Validate the amount match the original request\", function (){\r",
+											"    \r",
+											"    pm.expect(actualAmount).to.be.eql(expectedAmount);\r",
+											"})\r",
+											"\r",
+											"pm.test(\"Validate the currency match the original request\", function (){\r",
+											"    \r",
+											"    pm.expect(actualCurrency).to.be.eql(expectedCurrency);\r",
+											"})\r",
+											"\r",
+											"\r",
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var random_idempotency_key = pm.variables.replaceIn('{{$randomUUID}}');\r",
+											"pm.collectionVariables.set(\"idempotency_key_\",random_idempotency_key);\r",
+											"\r",
+											"\r",
+											"//var random_amount = pm.variables.replaceIn('{{$randomInt}}');\r",
+											"//pm.collectionVariables.set(\"amount_\", random_amount);\r",
+											"\r",
+											"pm.collectionVariables.set(\"amount_\", 20);\r",
+											"\r",
+											"pm.collectionVariables.set(\"expected_status_code\", 200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Square-Version",
+										"value": "{{squareVersion}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"amount_money\": {\r\n        \"currency\": \"{{currency_code}}\",\r\n        \"amount\": {{amount_}}\r\n    },\r\n    \"idempotency_key\": \"{{idempotency_key_}}\",\r\n    \"source_id\": \"cnon:card-nonce-ok\",\r\n    \"autocomplete\": false\r\n}"
+								},
+								"url": {
+									"raw": "{{baseURL}}/{{subURLPayments}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"{{subURLPayments}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update a payment",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var random_idempotency_key = pm.variables.replaceIn('{{$randomUUID}}');\r",
+											"pm.collectionVariables.set(\"idempotency_key_\",random_idempotency_key);\r",
+											"\r",
+											"\r",
+											"pm.collectionVariables.set(\"amount_\", 10);\r",
+											"\r",
+											"pm.collectionVariables.set(\"expected_status_code\", 200);"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseJSON = pm.response.json();\r",
+											"\r",
+											"pm.test('Schema is valid', function() {\r",
+											"  pm.response.to.have.jsonSchema(responseJSON);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Content-Type header is application/json\", () => {\r",
+											"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');\r",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"idempotency_key\": \"{{idempotency_key_}}\",\r\n    \"payment\": {\r\n        \"amount_money\": {\r\n            \"amount\": {{amount_}},\r\n            \"currency\": \"{{currency_code}}\"\r\n        }\r\n    }\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/{{subURLPayments}}/{{payment_id}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"{{subURLPayments}}",
+										"{{payment_id}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Refunds",
+			"item": [
+				{
+					"name": "Create refunds",
+					"item": [
+						{
+							"name": "CreatePayment Low amount",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseJSON = pm.response.json();\r",
+											"pm.collectionVariables.set(\"payment_id\",responseJSON.payment.id);\r",
+											"\r",
+											"var expectedAmount = Number(pm.collectionVariables.get(\"amount_\"));\r",
+											"var actualAmount = (responseJSON.payment.amount_money.amount);\r",
+											"\r",
+											"var expectedCurrency = pm.collectionVariables.get(\"currency_code\");\r",
+											"var actualCurrency = (responseJSON.payment.amount_money.currency);\r",
+											"\r",
+											"pm.test(\"Validate the amount match the original request\", function (){\r",
+											"    \r",
+											"    pm.expect(actualAmount).to.be.eql(expectedAmount);\r",
+											"})\r",
+											"\r",
+											"pm.test(\"Validate the currency match the original request\", function (){\r",
+											"    \r",
+											"    pm.expect(actualCurrency).to.be.eql(expectedCurrency);\r",
+											"})\r",
+											"\r",
+											"\r",
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var random_idempotency_key = pm.variables.replaceIn('{{$randomUUID}}');\r",
+											"pm.collectionVariables.set(\"idempotency_key_\",random_idempotency_key);\r",
+											"\r",
+											"\r",
+											"//var random_amount = pm.variables.replaceIn('{{$randomInt}}');\r",
+											"//pm.collectionVariables.set(\"amount_\", random_amount);\r",
+											"\r",
+											"pm.collectionVariables.set(\"amount_\", 20);\r",
+											"\r",
+											"pm.collectionVariables.set(\"expected_status_code\", 200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Square-Version",
+										"value": "{{squareVersion}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"amount_money\": {\r\n        \"currency\": \"{{currency_code}}\",\r\n        \"amount\": {{amount_}}\r\n    },\r\n    \"idempotency_key\": \"{{idempotency_key_}}\",\r\n    \"source_id\": \"cnon:card-nonce-ok\"\r\n}"
+								},
+								"url": {
+									"raw": "{{baseURL}}/{{subURLPayments}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"{{subURLPayments}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create a refund",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var random_idempotency_key = pm.variables.replaceIn('{{$randomUUID}}');\r",
+											"pm.collectionVariables.set(\"idempotency_key_\",random_idempotency_key);\r",
+											"\r",
+											"\r",
+											"pm.collectionVariables.set(\"expected_status_code\", 200);\r",
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"try {\r",
+											"var responseJSON = pm.response.json();\r",
+											"pm.collectionVariables.set(\"refund_id\",responseJSON.refund.id);\r",
+											"\r",
+											"let actual_refund_created_at = responseJSON.refund.created_at.substring(0,10);\r",
+											"let todayDate=pm.variables.replaceIn('{{$isoTimestamp}}').substring(0,10)\r",
+											"\r",
+											"console.log(actual_refund_created_at);\r",
+											"console.log(todayDate); \r",
+											"\r",
+											"pm.test(\"2.G - Validate the refund's date matches today's date\", function (){\r",
+											"    \r",
+											"    pm.expect(actual_refund_created_at).to.be.eql(todayDate);\r",
+											"})\r",
+											"\r",
+											"pm.test(\"Response time is less than 300ms\", function () {\r",
+											"    pm.expect(pm.response.responseTime).to.be.below(300);\r",
+											"});\r",
+											"\r",
+											"}\r",
+											"\r",
+											"catch(error) {\r",
+											"  console.log(error);\r",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"amount_money\": {\r\n        \"amount\": {{amount_}},\r\n        \"currency\": \"{{currency_code}}\"\r\n    },\r\n    \"idempotency_key\": \"{{idempotency_key_}}\",\r\n    \"payment_id\": \"{{payment_id}}\"\r\n}\r\n\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/{{subURLRefunds}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"{{subURLRefunds}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create a payment high amount",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseJSON = pm.response.json();\r",
+											"pm.collectionVariables.set(\"payment_id\",responseJSON.payment.id);\r",
+											"\r",
+											"var expectedAmount = Number(pm.collectionVariables.get(\"amount_\"));\r",
+											"var actualAmount = (responseJSON.payment.amount_money.amount);\r",
+											"\r",
+											"var expectedCurrency = pm.collectionVariables.get(\"currency_code\");\r",
+											"var actualCurrency = (responseJSON.payment.amount_money.currency);\r",
+											"\r",
+											"pm.test(\"Validate the amount match the original request\", function (){\r",
+											"    \r",
+											"    pm.expect(actualAmount).to.be.eql(expectedAmount);\r",
+											"})\r",
+											"\r",
+											"pm.test(\"Validate the currency match the original request\", function (){\r",
+											"    \r",
+											"    pm.expect(actualCurrency).to.be.eql(expectedCurrency);\r",
+											"})\r",
+											"\r",
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var random_idempotency_key = pm.variables.replaceIn('{{$randomUUID}}');\r",
+											"pm.collectionVariables.set(\"idempotency_key_\",random_idempotency_key);\r",
+											"\r",
+											"\r",
+											"pm.collectionVariables.set(\"amount_\", 10000);\r",
+											"pm.collectionVariables.set(\"expected_status_code\", 200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Square-Version",
+										"value": "{{squareVersion}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"amount_money\": {\r\n        \"currency\": \"{{currency_code}}\",\r\n        \"amount\": {{amount_}}\r\n    },\r\n    \"idempotency_key\": \"{{idempotency_key_}}\",\r\n    \"source_id\": \"cnon:card-nonce-ok\"\r\n}"
+								},
+								"url": {
+									"raw": "{{baseURL}}/{{subURLPayments}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"{{subURLPayments}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create a refund with high amount",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var random_idempotency_key = pm.variables.replaceIn('{{$randomUUID}}');\r",
+											"pm.collectionVariables.set(\"idempotency_key_\",random_idempotency_key);\r",
+											"\r",
+											"pm.collectionVariables.set(\"expected_status_code\", 400);"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseJSON = pm.response.json();\r",
+											"\r",
+											"var expectedErrorCode=\"AMOUNT_TOO_HIGH\";\r",
+											"var actualCode = responseJSON.errors[0].code;\r",
+											"\r",
+											"console.log(expectedErrorCode);\r",
+											"console.log(actualCode);\r",
+											"\r",
+											"pm.test(\"Validate error message when refunding a payment with high amount\", function (){\r",
+											"    \r",
+											"    pm.expect(actualCode).to.eql(expectedErrorCode);\r",
+											"})\r",
+											"\r",
+											"pm.test(\"Response time is less than 300ms\", function () {\r",
+											"    pm.expect(pm.response.responseTime).to.be.below(300);\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"amount_money\": {\r\n      \"amount\": 999999999,\r\n      \"currency\": \"{{currency_code}}\"\r\n    },\r\n    \"idempotency_key\": \"{{idempotency_key_}}\",\r\n    \"payment_id\": \"{{payment_id}}\"\r\n  }\r\n\r\n  ",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/{{subURLRefunds}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"{{subURLRefunds}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Get refunds",
+					"item": [
+						{
+							"name": "Get a refund",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var random_idempotency_key = pm.variables.replaceIn('{{$randomUUID}}');\r",
+											"pm.collectionVariables.set(\"idempotency_key_\",random_idempotency_key);\r",
+											"\r",
+											"\r",
+											"var random_amount = pm.variables.replaceIn('{{$randomInt}}');\r",
+											"pm.collectionVariables.set(\"amount_\", random_amount);\r",
+											"\r",
+											"pm.collectionVariables.set(\"expected_status_code\", 200);"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseJSON = pm.response.json();\r",
+											"\r",
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Response time is less than 300ms\", function () {\r",
+											"    pm.expect(pm.response.responseTime).to.be.below(300);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Content-Type header is application/json\", () => {\r",
+											"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');\r",
+											"});\r",
+											"\r",
+											"pm.test('Schema is valid', function() {\r",
+											"  pm.response.to.have.jsonSchema(responseJSON);\r",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Square-Version",
+										"value": "2021-05-13",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseURL}}/{{subURLRefunds}}/{{refund_id}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"{{subURLRefunds}}",
+										"{{refund_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get all refunds",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseJSON = pm.response.json();\r",
+											"\r",
+											"pm.test('Schema is valid', function() {\r",
+											"  pm.response.to.have.jsonSchema(responseJSON);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Response time is less than 500ms\", function () {\r",
+											"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Content-Type header is application/json\", () => {\r",
+											"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');\r",
+											"});\r",
+											"\r",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Square-Version",
+										"value": "2021-05-13",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseURL}}/{{subURLRefunds}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"{{subURLRefunds}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			},
+			{
+				"key": "password",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"var responseJSON = pm.response.json();",
+					"",
+					"pm.test(\"Content-Type header is application/json\", () => {",
+					"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');",
+					"});",
+					"",
+					"pm.test('Schema is valid', function() {",
+					"  pm.response.to.have.jsonSchema(responseJSON);",
+					"});",
+					"",
+					"var expectedStatuscode = pm.collectionVariables.get(\"expected_status_code\");",
+					"",
+					"console.log(expectedStatuscode);",
+					"",
+					"pm.test(\"Status code is \"+expectedStatuscode, function () {",
+					"    pm.response.to.have.status(expectedStatuscode);",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "payment_id",
+			"value": ""
+		},
+		{
+			"key": "idempotency_key_",
+			"value": ""
+		},
+		{
+			"key": "amount_",
+			"value": ""
+		},
+		{
+			"key": "refund_id",
+			"value": ""
+		},
+		{
+			"key": "currency_code",
+			"value": "USD"
+		},
+		{
+			"key": "inv_payment_id",
+			"value": "fdsfdghsdhhr"
+		},
+		{
+			"key": "expected_status_code",
+			"value": ""
+		}
+	]
+}
